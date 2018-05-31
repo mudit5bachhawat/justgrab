@@ -1,6 +1,6 @@
 import sys
 from PyQt4.QtGui import QTreeWidgetItem, QMessageBox, QFileDialog
-from PyQt4.QtCore import pyqtSignal,pyqtSlot
+from PyQt4.QtCore import pyqtSignal, pyqtSlot
 from justExtract import justExtract
 
 from export import exportData
@@ -8,20 +8,20 @@ from export import exportData
 __author__ = 'mudit'
 
 import mainDialogModified
-from PyQt4 import QtCore,QtGui
+from PyQt4 import QtCore, QtGui
 
 
-class justExtractThread(QtCore.QThread,justExtract):
+class justExtractThread(QtCore.QThread, justExtract):
+    eventRowExtracted = pyqtSignal(list)
 
-    eventRowExtracted=pyqtSignal(list)
-
-    def processRow(self,data):
+    def processRow(self, data):
+        print data
         self.eventRowExtracted.emit([data])
 
     def run(self):
         self.extract()
 
-    def startExtracting(self,url):
+    def startExtracting(self, url):
         self.setUrl(url)
         self.start()
 
@@ -31,69 +31,64 @@ class justExtractThread(QtCore.QThread,justExtract):
 
 
 class MainWindow(QtGui.QDialog):
-
-    signalStart=pyqtSignal(str)
-    signalStop=pyqtSignal()
+    signalStart = pyqtSignal(str)
+    signalStop = pyqtSignal()
 
     def __init__(self):
         super(MainWindow, self).__init__()
 
         # QtGui.QDialog.__init__(self)
 
-        Ui=mainDialogModified.Ui_dialogMain()
+        Ui = mainDialogModified.Ui_dialogMain()
         Ui.setupUi(self)
-        self.Ui=Ui
-
+        self.Ui = Ui
 
     def getData(self):
-        arr=[]
-        tree=self.Ui.treeWidget
-        rootItem=tree.invisibleRootItem()
-        child_count= rootItem.childCount()
+        arr = []
+        tree = self.Ui.treeWidget
+        rootItem = tree.invisibleRootItem()
+        child_count = rootItem.childCount()
 
         for x in range(child_count):
-            item=rootItem.child(x)
-            arr.append([str(item.text(0)),str(item.text(1)),str(item.text(2)),str(item.text(3))])
+            item = rootItem.child(x)
+            arr.append([str(item.text(0)), str(item.text(1)), str(item.text(2)), str(item.text(3))])
 
         return arr
 
-
     def exportClicked(self):
-        filename=str(QFileDialog.getSaveFileName(self,"Save","filename.csv"))
-        if filename.strip()!='':
-            data=self.getData()
-            export=exportData(data)
+        filename = str(QFileDialog.getSaveFileName(self, "Save", "filename.csv"))
+        if filename.strip() != '':
+            data = self.getData()
+            export = exportData(data)
             export.toCSV(filename.strip())
-            QMessageBox.information(self,"Export","Export Successful to CSV format at "+filename)
+            QMessageBox.information(self, "Export", "Export Successful to CSV format at " + filename)
 
-
-
-    def addRow(self,arr):
-        rows=self.Ui.treeWidget.topLevelItemCount()
-        col=0
+    def addRow(self, arr):
+        rows = self.Ui.treeWidget.topLevelItemCount()
+        col = 0
         for data in arr:
             print data
             self.Ui.treeWidget.addTopLevelItem(QTreeWidgetItem(data))
 
     def extractingFinished(self):
-        QMessageBox.information(self,"Extracting Finished.","Extracting entries for link "+self.Ui.textUrl.text()+" finished")
+        QMessageBox.information(self, "Extracting Finished.",
+                                "Extracting entries for link " + self.Ui.textUrl.text() + " finished")
         self.Ui.changeToEditMode()
-
 
     def grabClicked(self):
 
-        if self.Ui.isStopMode==True:
+        if self.Ui.isStopMode == True:
             self.Ui.changeToEditMode()
             self.signalStop.emit()
         else:
-            text=str(self.Ui.textUrl.text())
-            text=text.strip()
-            if text=='':
-                QMessageBox.critical(self,"Enter valid url",
+            text = str(self.Ui.textUrl.text())
+            text = text.strip()
+            if text == '':
+                QMessageBox.critical(self, "Enter valid url",
                                      "Please enter a valid url.")
                 return
 
-            self.Ui.changeToStopMode()
+            self.Ui.changeToFixedMode()
             self.signalStart.emit(text)
 
     def clearTree(self):
@@ -101,11 +96,10 @@ class MainWindow(QtGui.QDialog):
 
 
 if __name__ == '__main__':
-
     app = QtGui.QApplication(sys.argv)
 
     mainWindow = MainWindow()
-    test=justExtractThread()
+    test = justExtractThread()
 
     # Connecting signals and slot
     test.eventRowExtracted.connect(mainWindow.addRow)
