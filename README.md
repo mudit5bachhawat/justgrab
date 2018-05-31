@@ -11,5 +11,5 @@ JustGrab is a GUI application for extracting data information from JustDial.
 # Dependencies
 * `Python 2.7`
 * `PyQt4`
-* `lxml (Python Library)`
-* `requests (Python Library)`
+* `lxml`
+* `requests`
